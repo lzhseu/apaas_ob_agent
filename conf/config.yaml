@@ -1,0 +1,30 @@
+http_server:
+  host: localhost
+  port: 8080
+
+feishu_app:
+  app_id: cli_a61e57b76e38901b
+  app_secret: u9O5VPkv7ZEI8oPUvdLeKfrhYUDuC41x
+
+prometheus:
+  function_exec_duration_seconds_bucket: {
+    name: function_exec_duration_seconds_bucket,
+    type: histogram,
+    label_names: [tenant_id, namespace, domain, env, module,
+                  function_name, function_api_name, language, function_type,
+                  is_front_end_access_enabled, exec_result, trigger_type],
+    buckets: [1, 2, 4, 8],
+  }
+
+  function_exec_duration_seconds_summary: {
+    name: function_exec_duration_seconds_summary,
+    type: summary,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   function_name, function_api_name, language, function_type,
+                   is_front_end_access_enabled, exec_result, trigger_type],
+    objectives: {
+      0.5: 0.05,
+      0.9: 0.01,
+      0.99: 0.001
+    }
+  }
