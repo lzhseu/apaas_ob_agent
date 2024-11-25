@@ -1,12 +1,12 @@
-package metrics
+package prometheus
 
 import (
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"sync"
 
 	"github.com/bytedance/sonic"
-	"github.com/lzhseu/apaas_ob_agent/utils"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -24,8 +24,13 @@ type Collector struct {
 	prom prometheus.Collector
 }
 
-func (c *Collector) Collect(tags map[string]string, value float64) {
-	defer utils.PanicGuard()
+func (c *Collector) Collect(tags map[string]string, value float64) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("goroutine panic: %+v\n%s\n", r, debug.Stack())
+			err = errors.Errorf("collect panic: %+v\n", r)
+		}
+	}()
 
 	switch c.prom.(type) {
 	case *prometheus.CounterVec:
@@ -37,8 +42,9 @@ func (c *Collector) Collect(tags map[string]string, value float64) {
 	case *prometheus.SummaryVec:
 		c.prom.(*prometheus.SummaryVec).With(tags).Observe(value)
 	default:
-		// todo: log
+		return errors.Errorf("collect error: invalid metric type: %s", c.Type)
 	}
+	return nil
 }
 
 func MustInit() {
@@ -89,76 +95,93 @@ func GetOrCreateCollector(name, typ string, labelNames []string) (*Collector, er
 
 func createCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	var collector *Collector
-
+	var err error
 	switch cfg.Type {
 	case MTypeCounter:
-		collector = createCounterCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createCounterCollector(cfg.Name, cfg.LabelNames)
 	case MTypeGauge:
-		collector = createGaugeCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createGaugeCollector(cfg.Name, cfg.LabelNames)
 	case MTypeHistogram:
-		collector = createHistogramCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createHistogramCollector(cfg.Name, cfg.LabelNames)
 	case MTypeSummary:
-		collector = createSummaryCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createSummaryCollector(cfg.Name, cfg.LabelNames)
 	default:
 		return nil, errors.Errorf("[createCollector] invalid metric type: %s", cfg.Type)
 	}
 
-	fmt.Printf("\n[lzh] create collector=%#v\n", collector)
-	prometheus.MustRegister(collector.prom)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = prometheus.Register(collector.prom); err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	return collector, nil
 }
 
-func createCounterCollector(name string, labelNames []string) *Collector {
-	opts := genOpts(name, MTypeCounter).(*prometheus.CounterOpts)
+func createCounterCollector(name string, labelNames []string) (*Collector, error) {
+	opts, err := genOpts(name, MTypeCounter)
+	if err != nil {
+		return nil, err
+	}
 	return &Collector{
 		Name: name,
 		Type: MTypeCounter,
-		prom: prometheus.NewCounterVec(*opts, labelNames),
-	}
+		prom: prometheus.NewCounterVec(*(opts.(*prometheus.CounterOpts)), labelNames),
+	}, nil
 }
 
-func createGaugeCollector(name string, labelNames []string) *Collector {
-	opts := genOpts(name, MTypeGauge).(*prometheus.GaugeOpts)
+func createGaugeCollector(name string, labelNames []string) (*Collector, error) {
+	opts, err := genOpts(name, MTypeGauge)
+	if err != nil {
+		return nil, err
+	}
 	return &Collector{
 		Name: name,
 		Type: MTypeGauge,
-		prom: prometheus.NewGaugeVec(*opts, labelNames),
-	}
+		prom: prometheus.NewGaugeVec(*(opts.(*prometheus.GaugeOpts)), labelNames),
+	}, nil
 }
 
-func createHistogramCollector(name string, labelNames []string) *Collector {
-	opts := genOpts(name, MTypeHistogram).(*prometheus.HistogramOpts)
+func createHistogramCollector(name string, labelNames []string) (*Collector, error) {
+	opts, err := genOpts(name, MTypeHistogram)
+	if err != nil {
+		return nil, err
+	}
 	return &Collector{
 		Name: name,
 		Type: MTypeHistogram,
-		prom: prometheus.NewHistogramVec(*opts, labelNames),
-	}
+		prom: prometheus.NewHistogramVec(*(opts.(*prometheus.HistogramOpts)), labelNames),
+	}, nil
 }
 
-func createSummaryCollector(name string, labelNames []string) *Collector {
-	opts := genOpts(name, MTypeSummary).(*prometheus.SummaryOpts)
+func createSummaryCollector(name string, labelNames []string) (*Collector, error) {
+	opts, err := genOpts(name, MTypeSummary)
+	if err != nil {
+		return nil, err
+	}
 	return &Collector{
 		Name: name,
 		Type: MTypeSummary,
-		prom: prometheus.NewSummaryVec(*opts, labelNames),
-	}
+		prom: prometheus.NewSummaryVec(*(opts.(*prometheus.SummaryOpts)), labelNames),
+	}, nil
 }
 
-func genOpts(name, typ string) (opts any) {
+func genOpts(name, typ string) (opts any, err error) {
 	opts = defaultOpts(name, typ)
 
 	// 如果配置文件中有，优先使用配置文件的参数，没有则使用默认参数
 	cfg, ok := conf.GetConfig().PrometheusCfg[name]
 	if !ok {
-		return opts
+		return opts, nil
 	}
 
-	if err := decodeCfgToOpts(cfg, opts); err != nil {
-		// todo: logs
+	if err = decodeCfgToOpts(cfg, opts); err != nil {
+		return nil, err
 	}
 
-	return opts
+	return opts, nil
 }
 
 func decodeCfgToOpts(cfg any, opts any) (err error) {

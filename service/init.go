@@ -1,7 +1,9 @@
 package service
 
-import "github.com/lzhseu/apaas_ob_agent/service/metrics"
+import (
+	"github.com/lzhseu/apaas_ob_agent/service/prometheus"
+)
 
 func MustInit() {
-	metrics.MustInit()
+	prometheus.MustInit()
 }

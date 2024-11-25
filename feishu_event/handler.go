@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/bytedance/sonic"
 	larkevent "github.com/larksuite/oapi-sdk-go/v3/event"
-	"github.com/lzhseu/apaas_ob_agent/utils"
 	"github.com/pkg/errors"
+
+	"github.com/lzhseu/apaas_ob_agent/inner/logs"
+	innermetrics "github.com/lzhseu/apaas_ob_agent/inner/metrics"
+	"github.com/lzhseu/apaas_ob_agent/pkg/recovery"
 )
 
 // FeishuEventPacket 飞书事件传输协议
@@ -19,8 +23,26 @@ type FeishuEventPacket struct {
 }
 
 // NewFeishuEventHandler 创建一个飞书事件处理器
-func NewFeishuEventHandler(newBizHandlerFunc func() BizHandlerIface, opts ...FeishuEventOptionFunc) func(context.Context, *larkevent.EventReq) error {
-	return func(ctx context.Context, req *larkevent.EventReq) error {
+func NewFeishuEventHandler(eventName string, newBizHandlerFunc func() BizHandlerIface, opts ...FeishuEventOptionFunc) func(context.Context, *larkevent.EventReq) error {
+	return func(ctx context.Context, req *larkevent.EventReq) (err error) {
+		startAt := time.Now()
+		schema := "-"
+		defer func() {
+			cost := time.Since(startAt).Milliseconds()
+			innermetrics.FeishuEventReceiveDurationMsHistogram.WithLabelValues(eventName, schema).Observe(float64(cost))
+			isErr := "false"
+			errMsg := "-"
+			if err != nil {
+				isErr = "true"
+				errMsg = errors.Cause(err).Error()
+				logs.Error(fmt.Sprintf("feishu event handle error: %v. header: %v, body: %v", err, req.Header, string(req.Body)))
+			} else {
+				innermetrics.FeishuEventReceiveDurationMsHistogram.WithLabelValues(eventName, schema).Observe(float64(cost))
+				innermetrics.FeishuEventReceiveDurationMsSummary.WithLabelValues(eventName, schema).Observe(float64(cost))
+			}
+			innermetrics.FeishuEventReceiveTotal.WithLabelValues(eventName, schema, isErr, errMsg).Inc()
+			logs.Debug(fmt.Sprintf("receive feishu event. header: %v, body: %v", req.Header, string(req.Body)))
+		}()
 
 		opt := &FeishuEventOption{}
 		for _, fn := range opts {
@@ -29,13 +51,14 @@ func NewFeishuEventHandler(newBizHandlerFunc func() BizHandlerIface, opts ...Fei
 
 		// 1. 解析数据包
 		packet := &FeishuEventPacket{}
-		if err := sonic.Unmarshal(req.Body, packet); err != nil {
+		if err = sonic.Unmarshal(req.Body, packet); err != nil {
 			return errors.WithStack(err)
 		}
+		schema = packet.Schema
 
 		// 2. 校验请求来源
 		if opt.needVerifyToken {
-			if err := checkVerifyToken(ctx, packet.Header, opt.verifyToken); err != nil {
+			if err = checkVerifyToken(ctx, packet.Header, opt.verifyToken); err != nil {
 				return err
 			}
 		}
@@ -45,23 +68,25 @@ func NewFeishuEventHandler(newBizHandlerFunc func() BizHandlerIface, opts ...Fei
 		if bizHandler == nil {
 			return errors.Errorf("biz handler is nil")
 		}
-		if err := bizHandler.Unmarshal(ctx, packet); err != nil {
+		if err = bizHandler.Unmarshal(ctx, packet); err != nil {
 			return err
 		}
 
 		// 4. 校验事件包格式
-		if err := bizHandler.Validate(ctx, packet); err != nil {
+		if err = bizHandler.Validate(ctx, packet); err != nil {
 			return err
 		}
 
 		// 5. 异步处理事件
-		utils.Go(
+		recovery.Go(
 			func() {
 				if err := bizHandler.Handle(ctx, packet); err != nil {
-					// todo: log
-					fmt.Printf("\n[lzh][err] handler err: %v\n", err)
+					logs.Error(fmt.Sprintf("feishu event handle error: %v. packet header: %v, packet event: %v", err, packet.Header, string(packet.Event)))
 				}
 			},
+			recovery.WithRecoverHandler(func(r any) {
+				innermetrics.PanicTotal.WithLabelValues("feishu_event_handler").Inc()
+			}),
 		)
 
 		return nil

@@ -16,7 +16,7 @@ func MustInit() {
 
 	// 注册「事件-事件处理器」
 	eventHandler := dispatcher.NewEventDispatcher("", "").
-		OnCustomizedEvent(EventTypeMetricReported, NewFeishuEventHandler(NewMetricsBizHandler))
+		OnCustomizedEvent(EventTypeMetricReported, NewFeishuEventHandler(EventTypeMetricReported, NewMetricsBizHandler))
 
 	cli := larkws.NewClient(clientID, clientSecret,
 		larkws.WithEventHandler(eventHandler),

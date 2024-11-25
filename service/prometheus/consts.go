@@ -1,4 +1,4 @@
-package metrics
+package prometheus
 
 const (
 	MTypeCounter   = "counter"

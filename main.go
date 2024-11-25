@@ -10,11 +10,13 @@ import (
 
 	"github.com/lzhseu/apaas_ob_agent/conf"
 	feishu "github.com/lzhseu/apaas_ob_agent/feishu_event"
+	"github.com/lzhseu/apaas_ob_agent/inner"
 	"github.com/lzhseu/apaas_ob_agent/service"
 )
 
 func main() {
 	conf.MustInit()
+	inner.MustInit()
 	feishu.MustInit()
 	service.MustInit()
 

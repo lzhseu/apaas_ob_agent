@@ -29,6 +29,7 @@ func GetConfig() *Config {
 type Config struct {
 	HttpServerCfg *HttpServerCfg            `yaml:"http_server"` // http 服务配置
 	FeishuAppCfg  *FeishuAppCfg             `yaml:"feishu_app"`  // 飞书应用配置
+	InnerLogsCfg  *LogsCfg                  `yaml:"inner_logs"`  // agent 自身的日志配置
 	PrometheusCfg map[string]*PrometheusCfg `yaml:"prometheus"`  // Prometheus 指标配置, 指标名 -> 配置。如果配置在 yaml 文件中，优先以配置为准，否则使用 prometheus 的默认配置
 }
 
@@ -40,6 +41,33 @@ type HttpServerCfg struct {
 type FeishuAppCfg struct {
 	AppID     string `yaml:"app_id"`
 	AppSecret string `yaml:"app_secret"`
+}
+
+type LogsCfg struct {
+	LogLevel *string        `yaml:"log_level"`
+	Console  *LogConsoleCfg `yaml:"console"`
+	File     *LogFileCfg    `yaml:"file"`
+	Loki     *LogLokiCfg    `yaml:"loki"`
+}
+
+type LogConsoleCfg struct {
+	Enable bool `yaml:"enable"`
+}
+
+type LogFileCfg struct {
+	Enable     bool    `yaml:"enable"`
+	FileName   string  `yaml:"filename"`
+	MaxAge     *int    `yaml:"max_age"`
+	SegDur     *string `yaml:"seg_dur"`      // 按照时间周期切割日志文件，取值：hour、day、week、month
+	SegMaxSize *int    `yaml:"seg_max_size"` // 按照文件大小切割日志文件，单位：MB
+}
+
+type LogLokiCfg struct {
+	Enable bool              `yaml:"enable"`
+	Schema string            `yaml:"schema"`
+	Host   string            `yaml:"host"`
+	Port   string            `yaml:"port"`
+	Labels map[string]string `yaml:"labels"`
 }
 
 type PrometheusCfg struct {

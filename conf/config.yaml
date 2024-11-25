@@ -1,10 +1,29 @@
 http_server:
-  host: localhost
-  port: 8080
+  host: 0.0.0.0
+  port: 8888
 
 feishu_app:
   app_id: cli_a61e57b76e38901b
   app_secret: u9O5VPkv7ZEI8oPUvdLeKfrhYUDuC41x
+
+inner_logs:
+  log_level: debug
+  console:
+    enable: true
+  file:
+    enable: true
+    filename: ./logs/apaas_agent.log
+    seg_dua: day
+    max_age: 30
+  loki:
+    enable: true
+    schema: http
+    host: 10.37.107.200
+    port: 3100
+    labels: {
+      service_name: apaas_agent
+    }
+
 
 prometheus:
   function_exec_duration_seconds_bucket: {
