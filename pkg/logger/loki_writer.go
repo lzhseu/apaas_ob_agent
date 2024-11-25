@@ -40,7 +40,7 @@ func (l *LokiWriter) Write(p []byte) (n int, err error) {
 		return 0, errors.WithStack(err)
 	}
 
-	if resp.StatusCode() != http.StatusOK || resp.StatusCode() != http.StatusNoContent {
+	if resp.StatusCode() != http.StatusOK && resp.StatusCode() != http.StatusNoContent {
 		return 0, errors.Errorf("status code: %d, body: %s", resp.StatusCode(), string(resp.Body()))
 	}
 

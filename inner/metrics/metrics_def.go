@@ -6,7 +6,7 @@ import "github.com/prometheus/client_golang/prometheus"
 var (
 	PanicTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "agent",
-		Name:      "panic",
+		Name:      "panic_total",
 	}, []string{"scene"})
 
 	FeishuEventReceiveTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
