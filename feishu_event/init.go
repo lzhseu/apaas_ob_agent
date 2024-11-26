@@ -13,6 +13,10 @@ import (
 func MustInit() {
 	clientID := conf.GetConfig().FeishuAppCfg.AppID
 	clientSecret := conf.GetConfig().FeishuAppCfg.AppSecret
+	logLevel := larkcore.LogLevelInfo
+	if conf.GetConfig().InnerLogsCfg.LogLevel != nil {
+		logLevel = logLevelFromStr[*(conf.GetConfig().InnerLogsCfg.LogLevel)]
+	}
 
 	// 注册「事件-事件处理器」
 	eventHandler := dispatcher.NewEventDispatcher("", "").
@@ -20,7 +24,7 @@ func MustInit() {
 
 	cli := larkws.NewClient(clientID, clientSecret,
 		larkws.WithEventHandler(eventHandler),
-		larkws.WithLogLevel(larkcore.LogLevelDebug),
+		larkws.WithLogLevel(logLevel),
 		larkws.WithDomain("https://open.feishu-boe.cn")) // todo：boe调试用，正式上线删除
 
 	go func() {
@@ -29,3 +33,12 @@ func MustInit() {
 		}
 	}()
 }
+
+var (
+	logLevelFromStr = map[string]larkcore.LogLevel{
+		"debug": larkcore.LogLevelDebug,
+		"info":  larkcore.LogLevelInfo,
+		"warn":  larkcore.LogLevelWarn,
+		"error": larkcore.LogLevelError,
+	}
+)

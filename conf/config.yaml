@@ -26,24 +26,100 @@ inner_logs:
 
 
 prometheus:
-  function_exec_duration_seconds_bucket: {
-    name: function_exec_duration_seconds_bucket,
+  data_engine_query_duration_seconds_histogram: {
+    name: data_engine_query_duration_seconds_histogram,
     type: histogram,
-    label_names: [tenant_id, namespace, domain, env, module,
-                  function_name, function_api_name, language, function_type,
-                  is_front_end_access_enabled, exec_result, trigger_type],
-    buckets: [1, 2, 4, 8],
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   source, exec_result, response_code,
+                   component_id, page_api_name, client_type, builder_version, client_id, app_id, flow_api_name,
+                   node, skill_id, function_api_name, function_version, sdk_version, field_api_name, global_query_api_name, action_name, query_api_name ],
+    buckets: [ 0.3, 0.5, 1, 2, 4, 8, 10 ]
+  }
+
+  data_engine_query_duration_seconds_summary: {
+    name: data_engine_query_duration_seconds_summary,
+    type: summary,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   source, exec_result, response_code,
+                   component_id, page_api_name, client_type, builder_version, client_id, app_id, flow_api_name,
+                   node, skill_id, function_api_name, function_version, sdk_version, field_api_name, global_query_api_name, action_name, query_api_name ],
+    objectives: {
+      0.5: 0.05,
+      0.9: 0.01,
+      0.95: 0.005,
+      0.99: 0.001,
+      0.999: 0.0001
+    }
+  }
+
+  function_exec_duration_seconds_histogram: {
+    name: function_exec_duration_seconds_histogram,
+    type: histogram,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   function_name, function_api_name, language, function_type, function_platform,
+                   is_front_end_access_enabled, exec_result, trigger_type ],
+    buckets: [ 0.3, 0.5, 1, 1.5, 2, 4, 8, 10, 30, 60, 300, 600, 900, 3600, 5400, 7200, 9000 ]
   }
 
   function_exec_duration_seconds_summary: {
     name: function_exec_duration_seconds_summary,
     type: summary,
     label_names: [ tenant_id, namespace, domain, env, module,
-                   function_name, function_api_name, language, function_type,
-                   is_front_end_access_enabled, exec_result, trigger_type],
+                   function_name, function_api_name, language, function_type, function_platform,
+                   is_front_end_access_enabled, exec_result, trigger_type ],
     objectives: {
       0.5: 0.05,
       0.9: 0.01,
-      0.99: 0.001
+      0.95: 0.005,
+      0.99: 0.001,
+      0.999: 0.0001
+    }
+  }
+
+  function_deploy_duration_seconds_histogram: {
+    name: function_deploy_duration_seconds_histogram,
+    type: histogram,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   function_name, function_api_name, language, function_type, function_platform,
+                   is_front_end_access_enabled, deploy_result ],
+    buckets: [ 15, 30, 60, 120, 240, 360 ]
+  }
+
+  function_deploy_duration_seconds_summary: {
+    name: function_deploy_duration_seconds_summary,
+    type: summary,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   function_name, function_api_name, language, function_type, function_platform,
+                   is_front_end_access_enabled, deploy_result ],
+    objectives: {
+      0.5: 0.05,
+      0.9: 0.01,
+      0.95: 0.005,
+      0.99: 0.001,
+      0.999: 0.0001
+    }
+  }
+
+  oapi_call_duration_milliseconds_histogram: {
+    name: oapi_call_duration_milliseconds_histogram,
+    type: histogram,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   method, path, version,
+                   client_id, response_code, source ],
+    buckets: [ 300, 500, 1000, 1500, 2000, 4000, 8000 ]
+  }
+
+  oapi_call_duration_milliseconds_summary: {
+    name: oapi_call_duration_milliseconds_summary,
+    type: summary,
+    label_names: [ tenant_id, namespace, domain, env, module,
+                   method, path, version,
+                   client_id, response_code, source ],
+    objectives: {
+      0.5: 0.05,
+      0.9: 0.01,
+      0.95: 0.005,
+      0.99: 0.001,
+      0.999: 0.0001
     }
   }
