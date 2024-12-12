@@ -2,11 +2,9 @@ package prometheus
 
 import (
 	"fmt"
-	"reflect"
 	"runtime/debug"
 	"sync"
 
-	"github.com/bytedance/sonic"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -98,13 +96,13 @@ func createCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	var err error
 	switch cfg.Type {
 	case MTypeCounter:
-		collector, err = createCounterCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createCounterCollector(cfg)
 	case MTypeGauge:
-		collector, err = createGaugeCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createGaugeCollector(cfg)
 	case MTypeHistogram:
-		collector, err = createHistogramCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createHistogramCollector(cfg)
 	case MTypeSummary:
-		collector, err = createSummaryCollector(cfg.Name, cfg.LabelNames)
+		collector, err = createSummaryCollector(cfg)
 	default:
 		return nil, errors.Errorf("[createCollector] invalid metric type: %s", cfg.Type)
 	}
@@ -120,94 +118,77 @@ func createCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	return collector, nil
 }
 
-func createCounterCollector(name string, labelNames []string) (*Collector, error) {
-	opts, err := genOpts(name, MTypeCounter)
-	if err != nil {
-		return nil, err
-	}
+func createCounterCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.CounterOpts{Name: cfg.Name}
 	return &Collector{
-		Name: name,
+		Name: cfg.Name,
 		Type: MTypeCounter,
-		prom: prometheus.NewCounterVec(*(opts.(*prometheus.CounterOpts)), labelNames),
+		prom: prometheus.NewCounterVec(opts, cfg.LabelNames),
 	}, nil
 }
 
-func createGaugeCollector(name string, labelNames []string) (*Collector, error) {
-	opts, err := genOpts(name, MTypeGauge)
-	if err != nil {
-		return nil, err
-	}
+func createGaugeCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.GaugeOpts{Name: cfg.Name}
 	return &Collector{
-		Name: name,
+		Name: cfg.Name,
 		Type: MTypeGauge,
-		prom: prometheus.NewGaugeVec(*(opts.(*prometheus.GaugeOpts)), labelNames),
+		prom: prometheus.NewGaugeVec(opts, cfg.LabelNames),
 	}, nil
 }
 
-func createHistogramCollector(name string, labelNames []string) (*Collector, error) {
-	opts, err := genOpts(name, MTypeHistogram)
-	if err != nil {
-		return nil, err
+func createHistogramCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.HistogramOpts{Name: cfg.Name}
+
+	if len(cfg.Buckets) == 0 {
+		opts.Buckets = prometheus.DefBuckets
 	}
+	if cfg.NativeHistogramBucketFactor != nil {
+		opts.NativeHistogramBucketFactor = *cfg.NativeHistogramBucketFactor
+	}
+	if cfg.NativeHistogramZeroThreshold != nil {
+		opts.NativeHistogramZeroThreshold = *cfg.NativeHistogramZeroThreshold
+	}
+	if cfg.NativeHistogramMaxBucketNumber != nil {
+		opts.NativeHistogramMaxBucketNumber = *cfg.NativeHistogramMaxBucketNumber
+	}
+	if cfg.NativeHistogramMinResetDuration != nil {
+		opts.NativeHistogramMinResetDuration = *cfg.NativeHistogramMinResetDuration
+	}
+	if cfg.NativeHistogramMaxZeroThreshold != nil {
+		opts.NativeHistogramMaxZeroThreshold = *cfg.NativeHistogramMaxZeroThreshold
+	}
+	if cfg.NativeHistogramMaxExemplars != nil {
+		opts.NativeHistogramMaxExemplars = *cfg.NativeHistogramMaxExemplars
+	}
+	if cfg.NativeHistogramExemplarTTL != nil {
+		opts.NativeHistogramExemplarTTL = *cfg.NativeHistogramExemplarTTL
+	}
+
 	return &Collector{
-		Name: name,
+		Name: cfg.Name,
 		Type: MTypeHistogram,
-		prom: prometheus.NewHistogramVec(*(opts.(*prometheus.HistogramOpts)), labelNames),
+		prom: prometheus.NewHistogramVec(opts, cfg.LabelNames),
 	}, nil
 }
 
-func createSummaryCollector(name string, labelNames []string) (*Collector, error) {
-	opts, err := genOpts(name, MTypeSummary)
-	if err != nil {
-		return nil, err
+func createSummaryCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.SummaryOpts{Name: cfg.Name}
+	if len(opts.Objectives) == 0 {
+		opts.Objectives = cfg.Objectives
 	}
+	if cfg.MaxAge != nil {
+		opts.MaxAge = *cfg.MaxAge
+	}
+	if cfg.AgeBuckets != nil {
+		opts.AgeBuckets = *cfg.AgeBuckets
+	}
+	if cfg.BufCap != nil {
+		opts.BufCap = *cfg.BufCap
+	}
+
 	return &Collector{
-		Name: name,
+		Name: cfg.Name,
 		Type: MTypeSummary,
-		prom: prometheus.NewSummaryVec(*(opts.(*prometheus.SummaryOpts)), labelNames),
+		prom: prometheus.NewSummaryVec(opts, cfg.LabelNames),
 	}, nil
-}
-
-func genOpts(name, typ string) (opts any, err error) {
-	opts = defaultOpts(name, typ)
-
-	// 如果配置文件中有，优先使用配置文件的参数，没有则使用默认参数
-	cfg, ok := conf.GetConfig().PrometheusCfg[name]
-	if !ok {
-		return opts, nil
-	}
-
-	if err = decodeCfgToOpts(cfg, opts); err != nil {
-		return nil, err
-	}
-
-	return opts, nil
-}
-
-func decodeCfgToOpts(cfg any, opts any) (err error) {
-	if reflect.ValueOf(cfg).IsNil() {
-		return errors.Errorf("cfg is nil")
-	}
-	buf, err := sonic.Marshal(cfg)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	if err = sonic.Unmarshal(buf, &opts); err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
-}
-
-func defaultOpts(name, typ string) any {
-	switch typ {
-	case MTypeCounter:
-		return &prometheus.CounterOpts{Name: name}
-	case MTypeGauge:
-		return &prometheus.GaugeOpts{Name: name}
-	case MTypeHistogram:
-		return &prometheus.HistogramOpts{Name: name}
-	case MTypeSummary:
-		return &prometheus.SummaryOpts{Name: name}
-	}
-	return nil
 }

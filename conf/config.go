@@ -2,6 +2,7 @@ package conf
 
 import (
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -76,18 +77,18 @@ type PrometheusCfg struct {
 	LabelNames []string `yaml:"label_names"`
 
 	// histogram 指标的配置，每项配置均可选，具体含义见：https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L365
-	Buckets                         []float64 `yaml:"buckets" json:"buckets,omitempty"`
-	NativeHistogramBucketFactor     *float64  `yaml:"native_histogram_bucket_factor" json:"native_histogram_bucket_factor,omitempty"`
-	NativeHistogramZeroThreshold    *float64  `yaml:"native_histogram_zero_threshold" json:"native_histogram_zero_threshold,omitempty"`
-	NativeHistogramMaxBucketNumber  *uint32   `yaml:"native_histogram_max_bucket_number" json:"native_histogram_max_bucket_number,omitempty"`
-	NativeHistogramMinResetDuration *int64    `yaml:"native_histogram_min_reset_duration" json:"native_histogram_min_reset_duration,omitempty"`
-	NativeHistogramMaxZeroThreshold *float64  `yaml:"native_histogram_max_zero_threshold" json:"native_histogram_max_zero_threshold,omitempty"`
-	NativeHistogramMaxExemplars     *int      `yaml:"native_histogram_max_exemplars" json:"native_histogram_max_exemplars,omitempty"`
-	NativeHistogramExemplarTTL      *int64    `yaml:"native_histogram_exemplar_ttl" json:"native_histogram_exemplar_ttl,omitempty"`
+	Buckets                         []float64      `yaml:"buckets" json:"buckets,omitempty"`
+	NativeHistogramBucketFactor     *float64       `yaml:"native_histogram_bucket_factor" json:"native_histogram_bucket_factor,omitempty"`
+	NativeHistogramZeroThreshold    *float64       `yaml:"native_histogram_zero_threshold" json:"native_histogram_zero_threshold,omitempty"`
+	NativeHistogramMaxBucketNumber  *uint32        `yaml:"native_histogram_max_bucket_number" json:"native_histogram_max_bucket_number,omitempty"`
+	NativeHistogramMinResetDuration *time.Duration `yaml:"native_histogram_min_reset_duration" json:"native_histogram_min_reset_duration,omitempty"`
+	NativeHistogramMaxZeroThreshold *float64       `yaml:"native_histogram_max_zero_threshold" json:"native_histogram_max_zero_threshold,omitempty"`
+	NativeHistogramMaxExemplars     *int           `yaml:"native_histogram_max_exemplars" json:"native_histogram_max_exemplars,omitempty"`
+	NativeHistogramExemplarTTL      *time.Duration `yaml:"native_histogram_exemplar_ttl" json:"native_histogram_exemplar_ttl,omitempty"`
 
 	// summary 指标的配置，每项配置均可选，具体含义见：https://github.com/prometheus/client_golang/blob/main/prometheus/summary.go#L88
 	Objectives map[float64]float64 `yaml:"objectives" json:"objectives,omitempty"`
-	MaxAge     *int64              `yaml:"max_age" json:"max_age,omitempty"`
-	AgeBuckets *int                `yaml:"age_buckets" json:"age_buckets,omitempty"`
+	MaxAge     *time.Duration      `yaml:"max_age" json:"max_age,omitempty"`
+	AgeBuckets *uint32             `yaml:"age_buckets" json:"age_buckets,omitempty"`
 	BufCap     *uint32             `yaml:"buf_cap" json:"buf_cap,omitempty"`
 }
