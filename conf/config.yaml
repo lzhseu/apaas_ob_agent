@@ -12,7 +12,7 @@ inner_logs:
     enable: true
   file:
     enable: true
-    filename: ./output/logs/apaas_agent.log
+    filename: /var/log/apaas_ob_agent/run.log
     seg_dua: day
     max_age: 30
   loki:
