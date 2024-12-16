@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"flag"
 	"os"
 	"time"
 
@@ -9,10 +10,14 @@ import (
 
 var (
 	globalConfig *Config
+	filePath     string
 )
 
 func MustInit() {
-	data, err := os.ReadFile("conf/config.yaml")
+	flag.StringVar(&filePath, "config-file", "conf/config.yaml", "points to the full path of the configuration file")
+	flag.Parse()
+
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}

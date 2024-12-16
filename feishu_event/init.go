@@ -25,7 +25,7 @@ func MustInit() {
 	cli := larkws.NewClient(clientID, clientSecret,
 		larkws.WithEventHandler(eventHandler),
 		larkws.WithLogLevel(logLevel),
-		larkws.WithDomain("https://open.feishu-boe.cn")) // todo：boe调试用，正式上线删除
+	)
 
 	go func() {
 		if err := cli.Start(context.Background()); err != nil {

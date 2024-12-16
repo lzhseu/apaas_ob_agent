@@ -16,7 +16,7 @@ WORKDIR /build
 COPY . .
 
 # 执行编译
-RUN go build -ldflags="-s -w" -o /app/apaas_ob_agent .
+RUN go build -ldflags="-s -w" -o /opt/apaas_ob_agent/bin/agent .
 
 FROM alpine:latest
 
@@ -30,14 +30,14 @@ ENV TZ Asia/Shanghai
 # 拷贝证书文件
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-WORKDIR /app
+WORKDIR /opt/apaas_ob_agent
 
-ARG RUN_NAME=apaas_ob_agent
+ARG RUN_NAME=agent
 
 # 拷贝 agent 的配置文件
 COPY --from=builder /build/conf/config.yaml ./conf/config.yaml
 
 # 拷贝编译后的二进制文件
-COPY --from=builder /app/${RUN_NAME} ./${RUN_NAME}
+COPY --from=builder /opt/apaas_ob_agent/bin/agent ./bin/${RUN_NAME}
 
-CMD ["./apaas_ob_agent"]
+ENTRYPOINT ["./bin/agent"]

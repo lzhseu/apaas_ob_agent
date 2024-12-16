@@ -1,0 +1,26 @@
+networks:
+  apaas-ob-network:
+    # external: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1
+
+services:
+  agent:
+    image: lzhseu/apaas_ob_agent:latest
+    container_name: agent
+    networks:
+      apaas-ob-network:
+        ipv4_address: 172.18.1.10
+    ports:
+      - 127.0.0.1:8001:8001 # 对 docker network 中暴露的 ip:port
+    restart: always
+    volumes:
+      - ./agent/conf:/mnt/apaas_ob_agent/conf # 挂载配置文件
+      - /var/log/apaas_ob_agent:/var/log/apaas_ob_agent # 挂载日志目录，作用：如果启用了将日志写到文件中，可以将日志文件挂载到宿主机
+    command:
+      - -config-file=/mnt/apaas_ob_agent/conf/config.yaml # 指定实际运行时的配置文件，即上面挂载的配置文件
+    entrypoint: /opt/apaas_ob_agent/bin/agent
