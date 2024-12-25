@@ -36,6 +36,7 @@ ARG RUN_NAME=agent
 
 # 拷贝 agent 的配置文件
 COPY --from=builder /build/conf/config.yaml ./conf/config.yaml
+COPY --from=builder /build/conf/schema/prometheus ./conf/schema/prometheus
 
 # 拷贝编译后的二进制文件
 COPY --from=builder /opt/apaas_ob_agent/bin/agent ./bin/${RUN_NAME}

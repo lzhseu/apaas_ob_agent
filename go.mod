@@ -2,8 +2,6 @@ module github.com/lzhseu/apaas_ob_agent
 
 go 1.22.7
 
-toolchain go1.22.9
-
 require (
 	github.com/bytedance/sonic v1.12.4
 	github.com/fatih/color v1.18.0

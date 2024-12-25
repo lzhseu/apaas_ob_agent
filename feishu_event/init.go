@@ -2,20 +2,23 @@ package feishu_event
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	"github.com/larksuite/oapi-sdk-go/v3/event/dispatcher"
 	larkws "github.com/larksuite/oapi-sdk-go/v3/ws"
 
-	"github.com/lzhseu/apaas_ob_agent/conf"
+	"github.com/lzhseu/apaas_ob_agent/config"
+	"github.com/lzhseu/apaas_ob_agent/inner/logs"
 )
 
 func MustInit() {
-	clientID := conf.GetConfig().FeishuAppCfg.AppID
-	clientSecret := conf.GetConfig().FeishuAppCfg.AppSecret
+	clientID := config.GetConfig().FeishuAppCfg.AppID
+	clientSecret := config.GetConfig().FeishuAppCfg.AppSecret
 	logLevel := larkcore.LogLevelInfo
-	if conf.GetConfig().InnerLogsCfg.LogLevel != nil {
-		logLevel = logLevelFromStr[*(conf.GetConfig().InnerLogsCfg.LogLevel)]
+	if config.GetConfig().InnerLogsCfg.LogLevel != nil {
+		logLevel = logLevelFromStr[*(config.GetConfig().InnerLogsCfg.LogLevel)]
 	}
 
 	// 注册「事件-事件处理器」
@@ -27,11 +30,22 @@ func MustInit() {
 		larkws.WithLogLevel(logLevel),
 	)
 
+	errChan := make(chan error)
+	timeout := time.After(time.Second * 3)
 	go func() {
 		if err := cli.Start(context.Background()); err != nil {
-			panic(err)
+			errChan <- err
+			return
 		}
 	}()
+
+	select {
+	case <-timeout:
+		logs.Info("feishu event listener started")
+	case err := <-errChan:
+		logs.Error(fmt.Sprintf("feishu event listener start err: %v", err))
+		panic(err)
+	}
 }
 
 var (

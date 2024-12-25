@@ -2,24 +2,38 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/lzhseu/apaas_ob_agent/conf"
+	"github.com/lzhseu/apaas_ob_agent/config"
 	feishu "github.com/lzhseu/apaas_ob_agent/feishu_event"
 	"github.com/lzhseu/apaas_ob_agent/inner"
+	"github.com/lzhseu/apaas_ob_agent/inner/logs"
 	"github.com/lzhseu/apaas_ob_agent/service"
 )
 
 func main() {
-	conf.MustInit()
+	config.MustInit()
 	inner.MustInit()
 	feishu.MustInit()
 	service.MustInit()
 
 	http.HandleFunc("/ping", Ping)
 	http.HandleFunc("/metrics", PrometheusExporter)
-	http.HandleFunc("/alert", AlertWebhook)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%v:%v", conf.GetConfig().HttpServerCfg.Host, conf.GetConfig().HttpServerCfg.Port), nil))
+	startHttpServer()
+}
+
+func startHttpServer() {
+	logs.Info("http server start...")
+
+	rootURL := config.GetConfig().HttpServerCfg.Host
+	if port := config.GetConfig().HttpServerCfg.Port; port != "" {
+		rootURL = fmt.Sprintf("%v:%v", rootURL, port)
+	}
+
+	err := http.ListenAndServe(rootURL, nil)
+	if err != nil {
+		logs.Error(fmt.Sprintf("http server exit unexpectedly. err = %v", err))
+	}
+	logs.Info("http server exit")
 }

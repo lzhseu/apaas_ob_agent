@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/lzhseu/apaas_ob_agent/conf"
+	"github.com/lzhseu/apaas_ob_agent/config"
 	"github.com/lzhseu/apaas_ob_agent/inner/metrics"
 	"github.com/lzhseu/apaas_ob_agent/pkg/logger"
 )
@@ -16,7 +16,7 @@ var (
 func MustInit() {
 	innerLogger = NewInnerLogger()
 
-	cfg := conf.GetConfig().InnerLogsCfg
+	cfg := config.GetConfig().InnerLogsCfg
 
 	opts := make([]logger.OptionFunc, 0)
 	if cfg.LogLevel != nil {
@@ -44,7 +44,7 @@ func MustInit() {
 	}
 
 	if cfg.Loki != nil && cfg.Loki.Enable {
-		innerLogger.Add(logger.NewLokiLogger(fmt.Sprintf("%v://%v:%v", cfg.Loki.Schema, cfg.Loki.Host, cfg.Loki.Port), cfg.Loki.Labels, opts...))
+		innerLogger.Add(logger.NewLokiLogger(cfg.Loki.RootURL, cfg.Loki.Labels, opts...))
 
 	}
 

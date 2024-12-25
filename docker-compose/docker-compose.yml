@@ -18,9 +18,18 @@ services:
     ports:
       - 127.0.0.1:8001:8001 # 对 docker network 中暴露的 ip:port
     restart: always
+    environment:
+      AGENT_SERVER_PORT: 8001
+      AGENT_LOG_LEVEL: info
+      AGENT_LOG_FILE_ENABLE: "true"
+      AGENT_LOG_LOKI_ENABLE: "true"
+      AGENT_LOG_LOKI_ROOT_URL: http://127.0.0.1:3100 # 这里改成 apaas-ob-network 网络中 loki 的 ip
+      FEISHU_APP_ID: cli_a68f84e19b6e100b
+      FEISHU_APP_SECRET: ch0a2qA9NTSnz2p5AzGwbc8HQtVmG0vH
     volumes:
       - ./agent/conf:/mnt/apaas_ob_agent/conf # 挂载配置文件
       - /var/log/apaas_ob_agent:/var/log/apaas_ob_agent # 挂载日志目录，作用：如果启用了将日志写到文件中，可以将日志文件挂载到宿主机
     command:
       - -config-file=/mnt/apaas_ob_agent/conf/config.yaml # 指定实际运行时的配置文件，即上面挂载的配置文件
+      - -prom-schema-dir=/mnt/apaas_ob_agent/conf/schema/prometheus # 指定实际运行时的 Prometheus schema 配置根目录
     entrypoint: /opt/apaas_ob_agent/bin/agent

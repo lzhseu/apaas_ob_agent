@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/lzhseu/apaas_ob_agent/conf"
+	"github.com/lzhseu/apaas_ob_agent/config"
 )
 
 var (
@@ -50,7 +50,7 @@ func MustInit() {
 
 	// 初始化配置文件中的指标
 	// 配置文件中主要是有一些特殊配置，如果没有配置在文件中，则运行时也会动态创建 collector，但此时使用的是 Prometheus SDK 的默认配置
-	for _, cfg := range conf.GetConfig().PrometheusCfg {
+	for _, cfg := range config.GetConfig().PrometheusCfg {
 		collector, err := createCollector(cfg)
 		if err != nil {
 			panic(err)
@@ -77,7 +77,7 @@ func GetOrCreateCollector(name, typ string, labelNames []string) (*Collector, er
 	}
 
 	// 创建新的 collector
-	c, err := createCollector(&conf.PrometheusCfg{
+	c, err := createCollector(&config.PrometheusCfg{
 		Name:       name,
 		Type:       typ,
 		LabelNames: labelNames,
@@ -91,7 +91,7 @@ func GetOrCreateCollector(name, typ string, labelNames []string) (*Collector, er
 	return c, nil
 }
 
-func createCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
+func createCollector(cfg *config.PrometheusCfg) (*Collector, error) {
 	var collector *Collector
 	var err error
 	switch cfg.Type {
@@ -118,8 +118,8 @@ func createCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	return collector, nil
 }
 
-func createCounterCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
-	opts := prometheus.CounterOpts{Name: cfg.Name}
+func createCounterCollector(cfg *config.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.CounterOpts{Name: cfg.Name, Help: cfg.Help}
 	return &Collector{
 		Name: cfg.Name,
 		Type: MTypeCounter,
@@ -127,8 +127,8 @@ func createCounterCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	}, nil
 }
 
-func createGaugeCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
-	opts := prometheus.GaugeOpts{Name: cfg.Name}
+func createGaugeCollector(cfg *config.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.GaugeOpts{Name: cfg.Name, Help: cfg.Help}
 	return &Collector{
 		Name: cfg.Name,
 		Type: MTypeGauge,
@@ -136,11 +136,11 @@ func createGaugeCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	}, nil
 }
 
-func createHistogramCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
-	opts := prometheus.HistogramOpts{Name: cfg.Name}
+func createHistogramCollector(cfg *config.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.HistogramOpts{Name: cfg.Name, Help: cfg.Help}
 
-	if len(cfg.Buckets) == 0 {
-		opts.Buckets = prometheus.DefBuckets
+	if len(cfg.Buckets) != 0 {
+		opts.Buckets = cfg.Buckets
 	}
 	if cfg.NativeHistogramBucketFactor != nil {
 		opts.NativeHistogramBucketFactor = *cfg.NativeHistogramBucketFactor
@@ -171,9 +171,9 @@ func createHistogramCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
 	}, nil
 }
 
-func createSummaryCollector(cfg *conf.PrometheusCfg) (*Collector, error) {
-	opts := prometheus.SummaryOpts{Name: cfg.Name}
-	if len(opts.Objectives) == 0 {
+func createSummaryCollector(cfg *config.PrometheusCfg) (*Collector, error) {
+	opts := prometheus.SummaryOpts{Name: cfg.Name, Help: cfg.Help}
+	if len(cfg.Objectives) != 0 {
 		opts.Objectives = cfg.Objectives
 	}
 	if cfg.MaxAge != nil {
