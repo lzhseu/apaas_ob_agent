@@ -1,0 +1,99 @@
+common_label_names:   # 公共的 label
+  - tenant_id
+  - namespace
+  - env
+  - page_api_name
+  - builder_version
+  - page_type
+
+schema: # 每个指标的 schema
+  page_load_count_total:
+    name: page_load_count_total
+    help: "number of page views"
+    type: counter
+
+  page_load_lcp_duration_milliseconds_total:
+    name: page_load_lcp_duration_milliseconds_total
+    help: "Total time cost in milliseconds of page load lcp"
+    type: counter
+
+  page_load_lcp_duration_milliseconds_histogram:
+    name: page_load_lcp_duration_milliseconds_histogram
+    help: "A histogram of page load lcp"
+    type: histogram
+    buckets: [ 50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 12000, 16000, 20000, 30000 ]
+
+  page_load_lcp_duration_milliseconds_summary:
+    name: page_load_lcp_duration_milliseconds_summary
+    help: "A summary of page load lcp"
+    type: summary
+    objectives:
+      0.5: 0.05
+      0.9: 0.01
+      0.95: 0.005
+      0.99: 0.001
+      0.999: 0.0001
+
+  page_load_fcp_duration_milliseconds_total:
+    name: page_load_fcp_duration_milliseconds_total
+    help: "Total time cost in milliseconds of page load fcp"
+    type: counter
+
+  page_load_fcp_duration_milliseconds_histogram:
+    name: page_load_fcp_duration_milliseconds_histogram
+    help: "A histogram of page load fcp"
+    type: histogram
+    buckets: [ 50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 12000, 16000, 20000, 30000 ]
+
+  page_load_fcp_duration_milliseconds_summary:
+    name: page_load_fcp_duration_milliseconds_summary
+    help: "A summary of page load fcp"
+    type: summary
+    objectives:
+      0.5: 0.05
+      0.9: 0.01
+      0.95: 0.005
+      0.99: 0.001
+      0.999: 0.0001
+
+  page_js_error_count_total:
+    name: page_js_error_count_total
+    help: "number of page JS errors"
+    type: counter
+
+  page_query_count_total:
+    name: page_query_count_total
+    help: "number of page queries"
+    type: counter
+    label_names: [ query_result, query_api_name ]
+
+  page_query_duration_milliseconds_total:
+    name: page_query_duration_milliseconds_total
+    help: ""
+    type: counter
+    label_names: [ query_result, query_api_name ]
+
+  page_query_duration_milliseconds_histogram:
+    name: page_query_duration_milliseconds_histogram
+    help: ""
+    type: histogram
+    buckets: [ 50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 12000, 16000, 20000, 30000 ]
+    label_names: [ query_result, query_api_name ]
+
+  page_query_duration_milliseconds_summary:
+    name: page_query_duration_milliseconds_summary
+    help: ""
+    type: summary
+    objectives:
+      0.5: 0.05
+      0.9: 0.01
+      0.95: 0.005
+      0.99: 0.001
+      0.999: 0.0001
+    label_names: [ query_result, query_api_name ]
+
+  page_operate_count_total:
+    name: page_operate_count_total
+    help: "number of page operation"
+    type: counter
+    label_names: [ component_id, operate_type ]

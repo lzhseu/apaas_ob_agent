@@ -29,6 +29,11 @@ func MustInit() {
 		larkws.WithEventHandler(eventHandler),
 		larkws.WithLogLevel(logLevel),
 	)
+	// cli := larkws.NewClient(clientID, clientSecret,
+	// 	larkws.WithEventHandler(eventHandler),
+	// 	larkws.WithLogLevel(logLevel),
+	// 	larkws.WithDomain("https://open.feishu-boe.cn/"),
+	// )
 
 	errChan := make(chan error)
 	timeout := time.After(time.Second * 3)

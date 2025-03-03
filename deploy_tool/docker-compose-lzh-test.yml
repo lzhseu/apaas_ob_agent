@@ -1,0 +1,130 @@
+networks:
+  apaas-metrics-deploy-tool_apaas-ob-network:
+    external: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
+  
+services:
+  agent_lane_package_6aa18b__c:
+    image: lzhseu/apaas_ob_agent:latest
+    container_name: agent_lane_package_6aa18b__c
+    networks:
+      apaas-metrics-deploy-tool_apaas-ob-network:
+        ipv4_address: 172.28.100.11
+    ports:
+      - 127.0.0.1:8001:8001
+    restart: always
+    environment:
+      AGENT_SERVER_PORT: 8001
+      FEISHU_APP_ID: cli_a7f679756931100c
+      FEISHU_APP_SECRET: IT64OBUhbIzTdhzv0THiQdtC3CDpF6F2
+      AGENT_LOG_LEVEL: debug
+      AGENT_LOG_LOKI_ENABLE: true
+      AGENT_LOG_LOKI_ROOT_URL:  "http://172.28.10.7:3100"
+    volumes:
+      - ./agent/conf:/mnt/apaas_ob_agent/conf
+      - /var/log/apaas/agent_lane_package_6aa18b__c:/var/log/apaas_ob_agent
+    command:
+      - -config-file=/mnt/apaas_ob_agent/conf/config.yaml
+      - -prom-schema-dir=/mnt/apaas_ob_agent/conf/schema/prometheus 
+    entrypoint: /opt/apaas_ob_agent/bin/agent
+
+  agent_pre_package_344ca4__c:
+    image: lzhseu/apaas_ob_agent:latest
+    container_name: agent_pre_package_344ca4__c
+    networks:
+      apaas-metrics-deploy-tool_apaas-ob-network:
+        ipv4_address: 172.28.100.12
+    ports:
+      - 127.0.0.1:8002:8002
+    restart: always
+    environment:
+      AGENT_SERVER_PORT: 8002
+      FEISHU_APP_ID: cli_a7d16bc12af7501c
+      FEISHU_APP_SECRET: 9tEcophMD5QXJowHQaYbJqnO8t5SrAeR
+      AGENT_LOG_LEVEL: debug
+      AGENT_LOG_LOKI_ENABLE: true
+      AGENT_LOG_LOKI_ROOT_URL:  "http://172.28.10.7:3100"
+    volumes:
+      - ./agent/conf:/mnt/apaas_ob_agent/conf
+      - /var/log/apaas/agent_pre_package_344ca4__c:/var/log/apaas_ob_agent
+    command:
+      - -config-file=/mnt/apaas_ob_agent/conf/config.yaml
+      - -prom-schema-dir=/mnt/apaas_ob_agent/conf/schema/prometheus 
+    entrypoint: /opt/apaas_ob_agent/bin/agent
+
+  agent_boe_package_9a9e37__c:
+    image: lzhseu/apaas_ob_agent_boe:latest
+    container_name: agent_boe_package_9a9e37__c
+    networks:
+      apaas-metrics-deploy-tool_apaas-ob-network:
+        ipv4_address: 172.28.100.13
+    ports:
+      - 127.0.0.1:8003:8003
+    restart: always
+    environment:
+      AGENT_SERVER_PORT: 8003
+      FEISHU_APP_ID: cli_a61e57b76e38901b
+      FEISHU_APP_SECRET: u9O5VPkv7ZEI8oPUvdLeKfrhYUDuC41x
+      AGENT_LOG_LEVEL: debug
+      AGENT_LOG_LOKI_ENABLE: true
+      AGENT_LOG_LOKI_ROOT_URL:  "http://172.28.10.7:3100"
+    volumes:
+      - ./agent/conf:/mnt/apaas_ob_agent/conf
+      - /var/log/apaas/agent_boe_package_9a9e37__c:/var/log/apaas_ob_agent
+    command:
+      - -config-file=/mnt/apaas_ob_agent/conf/config.yaml
+      - -prom-schema-dir=/mnt/apaas_ob_agent/conf/schema/prometheus 
+    entrypoint: /opt/apaas_ob_agent/bin/agent
+
+  agent_boe_package_9a9e37__c_cli_a7f748d76338d01c:
+    image: lzhseu/apaas_ob_agent_boe:latest
+    container_name: agent_boe_package_9a9e37__c_cli_a7f748d76338d01c
+    networks:
+      apaas-metrics-deploy-tool_apaas-ob-network:
+        ipv4_address: 172.28.100.14
+    ports:
+      - 127.0.0.1:8004:8004
+    restart: always
+    environment:
+      AGENT_SERVER_PORT: 8004
+      FEISHU_APP_ID: cli_a7f748d76338d01c
+      FEISHU_APP_SECRET: 1n8C5Of0q5EVmybEbWjZweWVIPP2gXFm
+      AGENT_LOG_LEVEL: debug
+      AGENT_LOG_LOKI_ENABLE: true
+      AGENT_LOG_LOKI_ROOT_URL:  "http://172.28.10.7:3100"
+    volumes:
+      - ./agent/conf:/mnt/apaas_ob_agent/conf
+      - /var/log/apaas/agent_boe_package_9a9e37__c:/var/log/apaas_ob_agent
+    command:
+      - -config-file=/mnt/apaas_ob_agent/conf/config.yaml
+      - -prom-schema-dir=/mnt/apaas_ob_agent/conf/schema/prometheus 
+    entrypoint: /opt/apaas_ob_agent/bin/agent
+
+  agent_lane_package_6aa18b__c_cli_a7f62efe798cd013:
+    image: lzhseu/apaas_ob_agent:latest
+    container_name: agent_lane_package_6aa18b__c_cli_a7f62efe798cd013
+    networks:
+      apaas-metrics-deploy-tool_apaas-ob-network:
+        ipv4_address: 172.28.100.15
+    ports:
+      - 127.0.0.1:8005:8005
+    restart: always
+    environment:
+      AGENT_SERVER_PORT: 8005
+      FEISHU_APP_ID: cli_a7f62efe798cd013
+      FEISHU_APP_SECRET: 0ixloF0Uffib1mLG6Sa6LcgJJBsJyxks
+      AGENT_LOG_LEVEL: debug
+      AGENT_LOG_LOKI_ENABLE: true
+      AGENT_LOG_LOKI_ROOT_URL:  "http://172.28.10.7:3100"
+    volumes:
+      - ./agent/conf:/mnt/apaas_ob_agent/conf
+      - /var/log/apaas/agent_boe_package_9a9e37__c:/var/log/apaas_ob_agent
+    command:
+      - -config-file=/mnt/apaas_ob_agent/conf/config.yaml
+      - -prom-schema-dir=/mnt/apaas_ob_agent/conf/schema/prometheus 
+    entrypoint: /opt/apaas_ob_agent/bin/agent
