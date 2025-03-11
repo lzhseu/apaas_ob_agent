@@ -14,6 +14,9 @@ import (
 )
 
 func MustInit() {
+	mustInitEventLogger()
+	mustInitLogLogger()
+
 	clientID := config.GetConfig().FeishuAppCfg.AppID
 	clientSecret := config.GetConfig().FeishuAppCfg.AppSecret
 	logLevel := larkcore.LogLevelInfo
@@ -23,11 +26,14 @@ func MustInit() {
 
 	// 注册「事件-事件处理器」
 	eventHandler := dispatcher.NewEventDispatcher("", "").
-		OnCustomizedEvent(EventTypeMetricReported, NewFeishuEventHandler(EventTypeMetricReported, NewMetricsBizHandler))
+		OnCustomizedEvent(EventTypeMetricReported, NewFeishuEventHandler(EventTypeMetricReported, NewMetricsBizHandler)).
+		OnCustomizedEvent(EventTypeEventReported, NewFeishuEventHandler(EventTypeEventReported, NewEventBizHandler)).
+		OnCustomizedEvent(EventTypeLogReported, NewFeishuEventHandler(EventTypeLogReported, NewLogBizHandler))
 
 	cli := larkws.NewClient(clientID, clientSecret,
 		larkws.WithEventHandler(eventHandler),
 		larkws.WithLogLevel(logLevel),
+		larkws.WithDomain("https://open.feishu-boe.cn/"),
 	)
 	// cli := larkws.NewClient(clientID, clientSecret,
 	// 	larkws.WithEventHandler(eventHandler),
