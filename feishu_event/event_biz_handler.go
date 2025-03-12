@@ -20,8 +20,12 @@ var (
 func mustInitEventLogger() {
 	rootURL := config.GetConfig().InnerLogsCfg.Loki.RootURL
 	labels := config.GetConfig().InnerLogsCfg.Loki.Labels
-	labels["data_type"] = "event"
-	eventLoki = logger.NewLokiLogger(rootURL, labels)
+	newLabels := make(map[string]string)
+	for k, v := range labels {
+		newLabels[k] = v
+	}
+	newLabels["data_type"] = "event"
+	eventLoki = logger.NewLokiLogger(rootURL, newLabels)
 }
 
 type EventBizHandler struct {
@@ -56,7 +60,12 @@ func (e *EventBizHandler) Handle(ctx context.Context, packet *FeishuEventPacket)
 }
 
 func (e *EventBizHandler) handleEvent(event *Event) (err error) {
-	eventLoki.Info(fmt.Sprintf("%#v", event))
+	str, err := sonic.MarshalString(event)
+	if err != nil {
+		eventLoki.Error(fmt.Sprintf("marshal log error: %v", err))
+		return nil
+	}
+	eventLoki.Info(str)
 	return nil
 }
 

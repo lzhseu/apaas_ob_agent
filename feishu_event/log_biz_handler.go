@@ -20,8 +20,12 @@ var (
 func mustInitLogLogger() {
 	rootURL := config.GetConfig().InnerLogsCfg.Loki.RootURL
 	labels := config.GetConfig().InnerLogsCfg.Loki.Labels
-	labels["data_type"] = "log"
-	logLoki = logger.NewLokiLogger(rootURL, labels)
+	newLabels := make(map[string]string)
+	for k, v := range labels {
+		newLabels[k] = v
+	}
+	newLabels["data_type"] = "log"
+	logLoki = logger.NewLokiLogger(rootURL, newLabels)
 }
 
 type LogBizHandler struct {
