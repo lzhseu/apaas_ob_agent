@@ -6,6 +6,7 @@ common_label_names:   # 公共的 label
   - language
   - is_long_task
   - is_front_end_access_enabled
+  - runtime
 
 schema: # 每个指标的 schema
   function_exec_total:
@@ -21,14 +22,14 @@ schema: # 每个指标的 schema
     label_names: [ exec_result, trigger_type ]
 
   function_exec_duration_milliseconds_histogram:
-    name: function_exec_duration_seconds_histogram
+    name: function_exec_duration_milliseconds_histogram
     help: "A histogram of latencies per execution"
     type: histogram
     label_names: [ exec_result, trigger_type ]
     buckets: [ 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 30000, 60000, 300000, 600000, 900000, 3600000, 5400000, 7200000, 9000000 ]
 
   function_exec_duration_milliseconds_summary:
-    name: function_exec_duration_seconds_summary
+    name: function_exec_duration_milliseconds_summary
     help: "A summary of latencies per execution"
     type: summary
     label_names: [ exec_result, trigger_type ]

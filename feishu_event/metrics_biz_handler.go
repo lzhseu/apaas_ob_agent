@@ -3,12 +3,14 @@ package feishu_event
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 
+	"github.com/lzhseu/apaas_ob_agent/config"
 	"github.com/lzhseu/apaas_ob_agent/inner/logs"
 	innermetrics "github.com/lzhseu/apaas_ob_agent/inner/metrics"
 	"github.com/lzhseu/apaas_ob_agent/service/prometheus"
@@ -93,9 +95,16 @@ func (m *MetricsBizHandler) handlerMetric(metric *Metric) (err error) {
 		return nil
 	}
 
+	cfg, ok := config.GetConfig().PrometheusCfg[metric.Name]
+	if !ok {
+		return errors.Errorf("metric not found in config. metric name: %s", metric.Name)
+	}
+
 	labelNames := make([]string, 0, len(metric.Attributes))
 	for key := range metric.Attributes {
-		labelNames = append(labelNames, key)
+		if slices.Contains(cfg.LabelNames, key) {
+			labelNames = append(labelNames, key)
+		}
 	}
 
 	// 获取 collector

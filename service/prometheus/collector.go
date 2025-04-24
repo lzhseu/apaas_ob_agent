@@ -186,6 +186,8 @@ func createSummaryCollector(cfg *config.PrometheusCfg) (*Collector, error) {
 		opts.BufCap = *cfg.BufCap
 	}
 
+	fmt.Printf("[lzh] %#v\n\n", opts)
+
 	return &Collector{
 		Name: cfg.Name,
 		Type: MTypeSummary,
