@@ -3,12 +3,14 @@ package feishu_event
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 
+	"github.com/lzhseu/apaas_ob_agent/config"
 	"github.com/lzhseu/apaas_ob_agent/inner/logs"
 	innermetrics "github.com/lzhseu/apaas_ob_agent/inner/metrics"
 	"github.com/lzhseu/apaas_ob_agent/service/prometheus"
@@ -93,9 +95,20 @@ func (m *MetricsBizHandler) handlerMetric(metric *Metric) (err error) {
 		return nil
 	}
 
+	cfg, ok := config.GetConfig().PrometheusCfg[metric.Name]
+	if !ok {
+		return errors.Errorf("metric not found in config. metric name: %s", metric.Name)
+	}
+
+	// 只有在配置中的 label 才会被收集，这里需要过滤一些不需要的 label
+	// 原因：观测不断迭代，可能会添加新的 label，为了不让新的 label 影响已经在运行的 agent
+	attributes := make(map[string]string)
 	labelNames := make([]string, 0, len(metric.Attributes))
-	for key := range metric.Attributes {
-		labelNames = append(labelNames, key)
+	for key, val := range metric.Attributes {
+		if slices.Contains(cfg.LabelNames, key) {
+			labelNames = append(labelNames, key)
+			attributes[key] = val
+		}
 	}
 
 	// 获取 collector
@@ -105,7 +118,7 @@ func (m *MetricsBizHandler) handlerMetric(metric *Metric) (err error) {
 	}
 
 	// 收集指标
-	if err = collector.Collect(metric.Attributes, metric.Value); err != nil {
+	if err = collector.Collect(attributes, metric.Value); err != nil {
 		return err
 	}
 
