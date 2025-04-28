@@ -45,7 +45,6 @@ func MustInit() {
 
 	if cfg.Loki != nil && cfg.Loki.Enable {
 		innerLogger.Add(logger.NewLokiLogger(cfg.Loki.RootURL, cfg.Loki.Labels, opts...))
-
 	}
 
 	// 兜底用 console
